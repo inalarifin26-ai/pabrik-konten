@@ -6,9 +6,12 @@ import json
 
 # 1. SETUP FIREBASE FIRESTORE
 if not firebase_admin._apps:
-    key_dict = json.loads(st.secrets["FIREBASE_JSON"])
-    cred = credentials.Certificate(key_dict)
-    firebase_admin.initialize_app(cred)
+    try:
+        key_dict = json.loads(st.secrets["FIREBASE_JSON"])
+        cred = credentials.Certificate(key_dict)
+        firebase_admin.initialize_app(cred)
+    except Exception as e:
+        st.error(f"Error Konfigurasi Secrets: {e}")
 
 db = firestore.client()
 
@@ -16,11 +19,11 @@ db = firestore.client()
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel('gemini-pro')
 
-st.set_page_config(page_title="Pabrik Konten AI")
+st.set_page_config(page_title="Pabrik Konten AI", layout="centered")
 st.title("🚀 Pabrik Konten AI")
 
-# 3. SISTEM LOGIN & SALDO FIRESTORE
-user_id = st.text_input("Masukkan ID User Anda (Contoh: user_01)")
+# 3. SISTEM LOGIN & SALDO
+user_id = st.text_input("Masukkan ID User Anda", placeholder="Contoh: user_01")
 
 if user_id:
     # Mengambil dokumen dari koleksi 'user'
@@ -29,49 +32,38 @@ if user_id:
 
     if doc.exists:
         user_data = doc.to_dict()
-        # Mengambil field 'saldo' yang sudah bertipe number
         saldo = user_data.get('saldo', 0)
         
+        # Tampilan Sidebar
         st.sidebar.subheader(f"👤 User: {user_id}")
-        st.sidebar.write(f"💰 Saldo: {saldo} Poin")
+        st.sidebar.title(f"💰 Saldo: {saldo} Poin")
+        st.sidebar.divider()
+        st.sidebar.write("Gunakan poinmu untuk membuat konten AI berkualitas.")
 
-        topik = st.text_area("Apa yang ingin kamu buat hari ini?")
+        # Area Kerja AI
+        topik = st.text_area("Apa yang ingin kamu buat hari ini?", placeholder="Contoh: Buatkan caption Instagram tentang jualan sepatu...")
         
         if st.button("Buat Konten (Biaya: 50 Poin)"):
             if saldo >= 50:
-                with st.spinner('AI sedang menulis...'):
-                    response = model.generate_content(topik)
-                    st.success("Konten Berhasil Dibuat!")
-                    st.write(response.text)
-                    
-                    # Update saldo otomatis di Firestore
-                    user_ref.update({'saldo': saldo - 50})
-                    st.info(f"Saldo dipotong 50. Sisa saldo: {saldo - 50}")
-                    st.balloons()
-            else:
-                st.error("Saldo tidak cukup!")
-    else:
-        st.error(f"ID User '{user_id}' tidak ditemukan di koleksi 'user' Firestore.")
-        
-        if st.button("Buat Konten (Biaya: 50 Poin)"):
-            if saldo >= 50:
-                with st.spinner('AI sedang menulis konten untukmu...'):
+                with st.spinner('Sedang memproses konten...'):
                     try:
-                        # Proses AI
-                        response = model.generate_content(f"Buatlah konten sosial media yang menarik tentang: {topik}")
-                        st.success("Konten Berhasil Dibuat!")
+                        response = model.generate_content(topik)
+                        st.markdown("### Hasil Konten Anda:")
                         st.write(response.text)
                         
-                        # Potong Saldo di Firebase
+                        # Update saldo di Firestore
                         new_saldo = saldo - 50
-                        ref.update({'saldo': new_saldo})
-                        st.info(f"Saldo dipotong 50. Sisa saldo: {new_saldo}")
+                        user_ref.update({'saldo': new_saldo})
+                        
+                        st.success(f"Berhasil! Saldo terpotong 50. Sisa: {new_saldo}")
                         st.balloons()
+                        # Refresh halaman untuk update saldo di sidebar
+                        st.button("Update Saldo Baru")
                     except Exception as e:
-                        st.error(f"Terjadi kesalahan AI: {e}")
+                        st.error(f"Gagal memanggil AI: {e}")
             else:
-                st.error("Saldo tidak cukup! Silakan hubungi admin untuk Top-up.")
+                st.error("Maaf, saldo Anda tidak cukup untuk membuat konten.")
     else:
-        st.error("ID User tidak ditemukan. Pastikan sudah terdaftar di database.")
+        st.error(f"ID User '{user_id}' tidak ditemukan. Pastikan penulisan sudah benar.")
 else:
-    st.info("Silakan masukkan ID User di kolom atas untuk mulai.")
+    st.info("Silakan masukkan ID User di kolom atas untuk melihat saldo dan mulai menggunakan AI.")
