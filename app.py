@@ -1,39 +1,57 @@
 import streamlit as st
 import google.generativeai as genai
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, firestore
 import json
 
-# 1. SETUP FIREBASE
+# 1. SETUP FIREBASE FIRESTORE
 if not firebase_admin._apps:
-    # Data diambil dari Secrets di Streamlit Cloud
     key_dict = json.loads(st.secrets["FIREBASE_JSON"])
     cred = credentials.Certificate(key_dict)
-    firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://value-fe222-default-rtdb.firebaseio.com/'
-    })
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 
 # 2. SETUP GEMINI AI
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel('gemini-pro')
 
-st.set_page_config(page_title="Pabrik Konten AI", page_icon="🚀")
+st.set_page_config(page_title="Pabrik Konten AI")
 st.title("🚀 Pabrik Konten AI")
 
-# 3. SISTEM LOGIN & SALDO
+# 3. SISTEM LOGIN & SALDO FIRESTORE
 user_id = st.text_input("Masukkan ID User Anda (Contoh: user_01)")
 
 if user_id:
-    ref = db.reference(f'users/{user_id}')
-    user_data = ref.get()
+    # Mengambil dokumen dari koleksi 'user'
+    user_ref = db.collection('user').document(user_id)
+    doc = user_ref.get()
 
-    if user_data:
+    if doc.exists:
+        user_data = doc.to_dict()
+        # Mengambil field 'saldo' yang sudah bertipe number
         saldo = user_data.get('saldo', 0)
+        
         st.sidebar.subheader(f"👤 User: {user_id}")
         st.sidebar.write(f"💰 Saldo: {saldo} Poin")
 
-        # 4. FORM PEMBUAT KONTEN
-        topik = st.text_area("Apa yang ingin kamu buat hari ini?", placeholder="Contoh: Tips sukses jualan online")
+        topik = st.text_area("Apa yang ingin kamu buat hari ini?")
+        
+        if st.button("Buat Konten (Biaya: 50 Poin)"):
+            if saldo >= 50:
+                with st.spinner('AI sedang menulis...'):
+                    response = model.generate_content(topik)
+                    st.success("Konten Berhasil Dibuat!")
+                    st.write(response.text)
+                    
+                    # Update saldo otomatis di Firestore
+                    user_ref.update({'saldo': saldo - 50})
+                    st.info(f"Saldo dipotong 50. Sisa saldo: {saldo - 50}")
+                    st.balloons()
+            else:
+                st.error("Saldo tidak cukup!")
+    else:
+        st.error(f"ID User '{user_id}' tidak ditemukan di koleksi 'user' Firestore.")
         
         if st.button("Buat Konten (Biaya: 50 Poin)"):
             if saldo >= 50:
