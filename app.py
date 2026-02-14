@@ -4,22 +4,22 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 
-# 1. SETUP FIREBASE FIRESTORE
+# 1. SETUP FIREBASE (FIRESTORE)
 if not firebase_admin._apps:
     try:
         key_dict = json.loads(st.secrets["FIREBASE_JSON"])
         cred = credentials.Certificate(key_dict)
         firebase_admin.initialize_app(cred)
     except Exception as e:
-        st.error(f"Error Konfigurasi Firebase: {e}")
+        st.error(f"Error Firebase: {e}")
 
 db = firestore.client()
 
-# 2. SETUP GEMINI AI (VERSI PALING KOMPATIBEL)
+# 2. SETUP GEMINI AI (MODEL STABIL)
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
-# PERBAIKAN: Menggunakan penamaan eksplisit untuk menghindari error 404
-model = genai.GenerativeModel(model_name="gemini-1.5-flash")
+# Menggunakan model paling stabil untuk menghindari error 404
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 st.set_page_config(page_title="Pabrik Konten AI", layout="centered")
 st.title("🚀 Pabrik Konten AI")
@@ -35,22 +35,23 @@ if user_id:
         user_data = doc.to_dict()
         saldo = user_data.get('saldo', 0)
         
+        # Tampilan Saldo di Sidebar
         st.sidebar.title(f"💰 Saldo: {saldo} Poin")
         st.sidebar.write(f"👤 User: {user_id}")
         st.sidebar.divider()
 
-        topik = st.text_area("Tulis ide kontenmu di sini...", placeholder="Contoh: Buat caption jualan ayam crispy...")
+        topik = st.text_area("Tulis ide kontenmu di sini...", placeholder="Contoh: Buatkan caption jualan ayam geprek...")
         
         if st.button("Buat Konten (50 Poin)"):
             if saldo >= 50:
                 with st.spinner('Sedang memproses konten...'):
                     try:
-                        # Proses generate konten
+                        # Memanggil AI
                         response = model.generate_content(topik)
                         st.markdown("### Hasil Konten Anda:")
                         st.write(response.text)
                         
-                        # Update saldo di Firestore secara otomatis
+                        # Update Saldo di Firestore
                         new_saldo = int(saldo) - 50
                         user_ref.update({'saldo': new_saldo})
                         
@@ -61,4 +62,4 @@ if user_id:
             else:
                 st.error("Maaf, saldo Anda tidak mencukupi.")
     else:
-        st.error(f"ID User '{user_id}' tidak ditemukan.")
+        st.error(f"ID User '{user_id}' tidak ditemukan di Firestore.")
