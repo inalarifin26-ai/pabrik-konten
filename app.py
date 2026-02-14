@@ -14,12 +14,13 @@ if not firebase_admin._apps:
         st.error(f"Error Firebase: {e}")
 db = firestore.client()
 
-# 2. SETUP GEMINI (AUTO-DETECT)
+# 2. SETUP GEMINI (AUTO-DETECT MODEL)
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
 target_model = next((m for m in available_models if 'flash' in m), available_models[0])
 model = genai.GenerativeModel(target_model)
 
+# Konfigurasi tampilan halaman
 st.set_page_config(page_title="Pabrik Konten AI", layout="wide")
 st.title("🚀 Pabrik Konten AI - Pro Edition")
 
@@ -38,49 +39,51 @@ if user_id:
         st.sidebar.title(f"💰 Saldo: {saldo} Poin")
         st.sidebar.write(f"👤 User ID: {user_id}")
         
-        # Fitur Baru: Tambah Saldo (Simulasi)
+        # Fitur Isi Ulang Saldo
         with st.sidebar.expander("➕ Isi Ulang Saldo"):
             tambah = st.number_input("Jumlah Poin", min_value=100, step=100)
             if st.button("Beli Poin Sekarang"):
                 new_saldo = saldo + tambah
                 user_ref.update({'saldo': new_saldo})
-                st.success(f"Saldo berhasil ditambah! Silakan refresh.")
+                st.success(f"Saldo ditambah! Sisa: {new_saldo}")
                 st.rerun()
         
         st.sidebar.divider()
-        st.sidebar.info(f"Model Aktif: {target_model}")
+        st.sidebar.info(f"Model: {target_model}")
 
         # --- HALAMAN UTAMA ---
+        # Gunakan kolom agar lebih rapi
         col1, col2 = st.columns([2, 1])
 
         with col1:
-            st.subheader("📝 Buat Konten Baru")
-            topik = st.text_area("Apa yang ingin kamu buat hari ini?", placeholder="Contoh: Caption jualan baju lebaran...")
+            st.subheader("📝 Buat Konten")
+            topik = st.text_area("Apa yang ingin kamu buat?", placeholder="Contoh: Caption jualan baju...")
             
-            if st.button("Proses Konten (Biaya: 50 Poin)"):
-                if saldo >= 50:
-                    with st.spinner('AI sedang meracik konten terbaik...'):
+            if st.button("Proses (50 Poin)"):
+                if not topik:
+                    st.warning("Silakan isi ide kontennya dulu!")
+                elif saldo >= 50:
+                    with st.spinner('AI sedang meracik konten...'):
                         try:
                             response = model.generate_content(topik)
                             hasil = response.text
-                            st.markdown("### ✨ Hasil Konten:")
+                            st.markdown("---")
+                            st.subheader("✨ Hasil Konten:")
                             st.write(hasil)
                             
-                            # Update Saldo
+                            # Update Saldo ke Firestore
                             new_saldo = int(saldo) - 50
                             user_ref.update({'saldo': new_saldo})
-                            
-                            # Simpan ke Riwayat (Opsional: simpan ke Firestore jika mau permanen)
-                            st.success(f"Selesai! Saldo dipotong 50. Sisa: {new_saldo}")
+                            st.success(f"Saldo dipotong 50. Sisa: {new_saldo}")
                             st.balloons()
                         except Exception as e:
-                            st.error(f"Terjadi kendala: {e}")
+                            st.error(f"Error AI: {e}")
                 else:
-                    st.error("Yah, saldo kamu habis. Yuk isi ulang di samping!")
+                    st.error("Saldo kamu habis!")
 
         with col2:
-            st.subheader("📜 Tips Cepat")
-            st.info("Gunakan kata kunci yang spesifik seperti 'lucu', 'formal', atau 'singkat' agar hasil AI lebih memuaskan.")
+            st.subheader("💡 Tips")
+            st.info("Hasil konten AI ini bisa langsung kamu copy-paste ke Instagram atau TikTok!")
 
     else:
-        st.error(f"User '{user_id}' tidak terdaftar di database.")
+        st.error(f"User '{user_id}' tidak ditemukan.")
