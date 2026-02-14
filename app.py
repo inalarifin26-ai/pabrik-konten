@@ -4,7 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 
-# 1. SETUP FIREBASE FIRESTORE (Penyebab utama error jika salah kode)
+# 1. SETUP FIREBASE FIRESTORE
 if not firebase_admin._apps:
     try:
         key_dict = json.loads(st.secrets["FIREBASE_JSON"])
@@ -15,17 +15,17 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-# 2. SETUP GEMINI AI
+# 2. SETUP GEMINI AI (SUDAH UPDATE KE 1.5 FLASH)
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 model = genai.GenerativeModel('gemini-1.5-flash')
+
 st.set_page_config(page_title="Pabrik Konten AI", layout="centered")
 st.title("🚀 Pabrik Konten AI")
 
-# 3. SISTEM LOGIN & SALDO FIRESTORE
+# 3. SISTEM LOGIN & SALDO
 user_id = st.text_input("Masukkan ID User Anda", placeholder="Contoh: user_01")
 
 if user_id:
-    # Kode ini akan mencari di Koleksi 'user' dan Dokumen 'user_01' sesuai gambar 1000114587.jpg
     user_ref = db.collection('user').document(user_id)
     doc = user_ref.get()
 
@@ -33,12 +33,10 @@ if user_id:
         user_data = doc.to_dict()
         saldo = user_data.get('saldo', 0)
         
-        # Tampilan Sidebar untuk Saldo
         st.sidebar.subheader(f"👤 User: {user_id}")
         st.sidebar.title(f"💰 Saldo: {saldo} Poin")
         st.sidebar.divider()
 
-        # Area Kerja Pembuatan Konten
         topik = st.text_area("Apa konten yang ingin kamu buat?", placeholder="Contoh: Buat caption jualan kopi...")
         
         if st.button("Buat Konten (Biaya: 50 Poin)"):
@@ -55,16 +53,11 @@ if user_id:
                         
                         st.success(f"Berhasil! Saldo berkurang 50. Sisa: {new_saldo}")
                         st.balloons()
-                        
-                        # Tombol refresh manual jika sidebar tidak langsung update
-                        if st.button("Refresh Saldo"):
-                            st.rerun()
                     except Exception as e:
                         st.error(f"Gagal memanggil AI: {e}")
             else:
                 st.error("Maaf, saldo kamu tidak cukup!")
     else:
-        # Jika user mengetik ID selain user_01
-        st.error(f"ID User '{user_id}' tidak ditemukan di database.")
+        st.error(f"ID User '{user_id}' tidak ditemukan.")
 else:
     st.info("Masukkan ID User (seperti user_01) untuk melihat saldo.")
