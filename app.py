@@ -4,32 +4,29 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 
-# 1. SETUP FIREBASE
+# 1. KONEKSI FIREBASE (FIRESTORE)
 if not firebase_admin._apps:
     try:
         key_dict = json.loads(st.secrets["FIREBASE_JSON"])
         cred = credentials.Certificate(key_dict)
         firebase_admin.initialize_app(cred)
     except Exception as e:
-        st.error(f"Error Firebase: {e}")
+        st.error(f"Error Koneksi: {e}")
 
 db = firestore.client()
 
-# 2. SETUP GEMINI (MENGGUNAKAN MODEL TERBARU DARI AI STUDIO)
+# 2. KONEKSI GEMINI AI (MODEL STABIL)
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-
-# Berdasarkan cross-check AI Studio kamu
-# Kita gunakan model yang paling stabil saat ini
+# Menggunakan penamaan model yang paling universal untuk menghindari error 404
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-st.set_page_config(page_title="Pabrik Konten AI")
+st.set_page_config(page_title="Pabrik Konten AI", layout="centered")
 st.title("🚀 Pabrik Konten AI")
 
-# 3. SISTEM LOGIN & SALDO FIRESTORE
+# 3. LOGIC SALDO & INPUT
 user_id = st.text_input("Masukkan ID User Anda", value="user_01")
 
 if user_id:
-    # Mengambil dokumen 'user_01' dari koleksi 'user'
     user_ref = db.collection('user').document(user_id)
     doc = user_ref.get()
 
@@ -37,28 +34,31 @@ if user_id:
         user_data = doc.to_dict()
         saldo = user_data.get('saldo', 0)
         
+        # Tampilan Sidebar
         st.sidebar.title(f"💰 Saldo: {saldo} Poin")
-        st.sidebar.write(f"User: {user_id}")
+        st.sidebar.write(f"👤 User: {user_id}")
+        st.sidebar.divider()
 
-        topik = st.text_area("Apa yang ingin kamu buat?")
+        topik = st.text_area("Tulis ide kontenmu di sini...")
         
         if st.button("Buat Konten (50 Poin)"):
             if saldo >= 50:
-                with st.spinner('Sedang memproses...'):
+                with st.spinner('AI sedang memproses...'):
                     try:
-                        # Memanggil AI dengan model terbaru
+                        # Memanggil AI
                         response = model.generate_content(topik)
-                        st.markdown("### Hasil:")
+                        st.markdown("### Hasil Konten:")
                         st.write(response.text)
                         
-                        # Potong saldo otomatis di Firestore
+                        # Update Saldo Otomatis di Firestore
                         new_saldo = int(saldo) - 50
                         user_ref.update({'saldo': new_saldo})
+                        
                         st.success(f"Berhasil! Sisa Saldo: {new_saldo}")
                         st.balloons()
                     except Exception as e:
                         st.error(f"Gagal memanggil AI: {e}")
             else:
-                st.error("Saldo tidak cukup!")
+                st.error("Maaf, saldo tidak mencukupi!")
     else:
-        st.error("ID User tidak ditemukan.")
+        st.error("ID User tidak terdaftar.")
