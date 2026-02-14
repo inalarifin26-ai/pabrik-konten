@@ -1,0 +1,51 @@
+import streamlit as st
+import google.generativeai as genai
+import firebase_admin
+from firebase_admin import credentials, db
+import json
+
+# 1. SETUP FIREBASE (Mengambil data dari Secrets Streamlit)
+if not firebase_admin._apps:
+    # Mengambil rahasia JSON yang kamu tempel di Secrets nanti
+    key_dict = json.loads(st.secrets["FIREBASE_JSON"])
+    cred = credentials.Certificate(key_dict)
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://value-fe222-default-rtdb.firebaseio.com/'
+    })
+
+# 2. SETUP GEMINI AI
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+model = genai.GenerativeModel('gemini-pro')
+
+st.title("🚀 Pabrik Konten AI")
+
+# 3. SISTEM LOGIN & SALDO
+user_id = st.text_input("Masukkan ID User Anda (Contoh: user_01)")
+
+if user_id:
+    ref = db.reference(f'users/{user_id}')
+    user_data = ref.get()
+
+    if user_data:
+        saldo = user_data.get('saldo', 0)
+        st.sidebar.write(f"👤 User: {user_id}")
+        st.sidebar.write(f"💰 Saldo: {saldo} Poin")
+
+        # 4. FORM PEMBUAT KONTEN
+        topik = st.text_area("Apa yang ingin kamu buat hari ini?")
+        
+        if st.button("Buat Konten (Biaya: 50 Poin)"):
+            if saldo >= 50:
+                with st.spinner('AI sedang menulis...'):
+                    # Proses AI
+                    response = model.generate_content(f"Buatlah konten sosial media tentang: {topik}")
+                    st.success("Selesai!")
+                    st.write(response.text)
+                    
+                    # Potong Saldo
+                    ref.update({'saldo': saldo - 50})
+                    st.rerun()
+            else:
+                st.error("Saldo tidak cukup! Silakan Top-up.")
+    else:
+        st.error("ID User tidak ditemukan di database.")
