@@ -1,70 +1,70 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- KONFIGURASI MESIN AI ---
-# Menggunakan model terbaru agar tidak error 'NotFound'
+# --- SETTING DASAR ---
+st.set_page_config(page_title="NOFA Factory", layout="wide")
+
+# --- KONEKSI MESIN AI (ANTI ERROR) ---
+# Menggunakan model terbaru agar tidak NotFound
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- SETTING TAMPILAN ---
-st.set_page_config(page_title="NOFA Content Factory", layout="wide")
+# Inisialisasi status login agar menu tidak hilang
+if 'step' not in st.session_state:
+    st.session_state.step = "login"
 
-# Inisialisasi session state agar menu tidak hilang
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-
-# --- FUNGSI GENERATE ---
-def generate_ai_content(prompt):
+# --- FUNGSI PROSES KONTEN ---
+def proses_ai(prompt):
     try:
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
-        st.error(f"Waduh, mesin mogok: {e}")
+        st.error(f"Gagal memanggil AI: {e}")
         return None
 
-# --- LOGIKA TAMPILAN (UI) ---
+# --- LOGIKA TAMPILAN ---
 
-# 1. TAMPILAN STUDIO ACCESS (Halaman Depan)
-if not st.session_state.logged_in:
+# 1. HALAMAN STUDIO ACCESS (Pintu Depan)
+if st.session_state.step == "login":
     st.title("🔑 Studio Access")
-    user_id = st.text_input("Enter your Creator ID", value="user_01")
-    st.subheader(f"🤖 Welcome back, {user_id}!")
+    creator_id = st.text_input("Enter your Creator ID", value="user_01")
+    st.subheader(f"🤖 Welcome back, {creator_id}!")
     
-    prompt = st.text_area("What's on your mind? (AI will craft the content for you)")
+    input_user = st.text_area("Apa yang ingin Anda buat hari ini?")
     
     if st.button("⚡ GENERATE"):
-        with st.spinner("Sedang memasak konten..."):
-            hasil = generate_ai_content(prompt)
+        with st.spinner("Menghubungkan ke Neural Network..."):
+            hasil = proses_ai(input_user)
             if hasil:
-                st.session_state.logged_in = True
-                st.session_state.hasil_konten = hasil
+                st.session_state.hasil = hasil
+                st.session_state.step = "dashboard"
                 st.rerun()
 
-# 2. TAMPILAN PUSAT PRODUKSI (Setelah Generate Sukses)
+# 2. HALAMAN DASHBOARD (Pusat Produksi)
 else:
-    # Header Aplikasi
     st.markdown("### 🧬 NOFA FACTORY V1.0.42")
     
-    # Menu Navigasi Bawah (Gaya Aplikasi)
-    menu = st.tabs(["🏠 HOME", "📝 PRODUKSI", "🎨 EDITOR", "📚 GUDANG"])
+    # Navigasi Bawah yang Manajer harapkan
+    tab1, tab2, tab3, tab4 = st.tabs(["🏠 HOME", "📝 PRODUKSI", "🎨 EDITOR", "📚 GUDANG"])
     
-    with menu[0]:
-        st.info("Pusat Produksi Aktif! Konten Viral hari ini siap diolah.")
-        st.write(st.session_state.hasil_konten) # Menampilkan hasil generate tadi
+    with tab1:
+        st.success("✅ Konten Berhasil Dibuat!")
+        st.write(st.session_state.hasil)
         
-    with menu[1]:
-        st.subheader("Target Output")
+    with tab2:
+        st.subheader("Input Produksi")
+        st.write("Siapkan bahan baku konten lo di sini.")
         st.button("Sosial Media")
         st.button("Artikel/Blog")
         
-    with menu[2]:
+    with tab3:
         st.subheader("Art Engine")
-        st.write("Fitur Editor Gambar segera hadir.")
+        st.write("Modul editor sedang sinkronisasi...")
         
-    with menu[3]:
+    with tab4:
         st.subheader("Neural Vault")
-        st.write("Aset Anda tersimpan di sini.")
+        st.write("Semua aset Anda tersimpan di sini.")
 
-    if st.button("Keluar Studio"):
-        st.session_state.logged_in = False
+    if st.button("⬅️ Kembali ke Studio"):
+        st.session_state.step = "login"
         st.rerun()
