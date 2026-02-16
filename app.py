@@ -7,7 +7,7 @@ genai.configure(api_key="AIzaSyCW86D0dmfGwliqF0oPHhGp6COXKy8Q3wI")
 
 # --- INISIALISASI MESIN FLASH LATEST ---
 # Menggunakan 'latest' untuk menembus error 404 versi v1beta
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 st.title("🛡️ SILA: SOVEREIGN OS")
 st.info("STATUS: DNA ANCHOR ACTIVE")
