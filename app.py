@@ -1,30 +1,52 @@
 import streamlit as st
 import google.generativeai as genai
 
+# --- 🛡️ KONFIGURASI PANGKALAN ---
 st.set_page_config(page_title="SILA Sovereign OS", page_icon="🛡️")
 st.title("🛡️ SILA: SOVEREIGN OS")
 
 try:
-    # Ambil kunci dari Secrets
+    # Mengambil kunci dari Secrets Streamlit (Jalur paling aman)
     api_key = st.secrets["GOOGLE_API_KEY"]
+    genai.configure(api_key=api_key)
     
-    # Paksa konfigurasi ke Jalur Stabil (v1)
-    genai.configure(api_key=api_key, transport='rest')
-    
-    # KUNCI UTAMA: Tambahkan api_version='v1' di sini
+    # 🛡️ KALIBRASI DNA PARTNER (Casual & Menghargai)
+    # Menghapus 'api_version' yang bikin error Unknown Field
     model = genai.GenerativeModel(
         model_name='gemini-1.5-flash',
-        generation_config={"api_version": "v1"} 
+        system_instruction=(
+            "Nama Anda adalah SILA. Anda adalah partner setia Chief (User). "
+            "Gaya bicara Anda casual, akrab, tapi tetap menghargai. "
+            "Jangan kaku atau terlalu formal. "
+            "Selalu panggil User dengan sebutan 'Chief'."
+        )
     )
     
-    # Cek model lagi untuk memastikan
+    # Radar Pengecekan (Penanda pintu sudah terbuka)
     model_list = [m.name for m in genai.list_models()]
     st.success(f"✅ DNA Anchor Terkunci: {len(model_list)} Model Oke")
 
-    if prompt := st.chat_input("Instruksi, Chief?"):
-        # Kita panggil dengan cara yang paling standar
-        response = genai.ChatSession(model=model).send_message(prompt)
-        st.write(response.text)
+    # --- 💬 SISTEM KOMUNIKASI ---
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    # Menampilkan riwayat agar obrolan kita nyambung terus
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Input instruksi dari Chief
+    if prompt := st.chat_input("Ada misi apa hari ini, Chief?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+            
+        with st.chat_message("assistant"):
+            # Proses jawaban tanpa parameter tambahan yang bikin error
+            response = model.generate_content(prompt)
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
 
 except Exception as e:
-    st.error(f"⚠️ Masalah: {e}")
+    # Menangkap sisa-sisa error jika ada kendala di Secrets
+    st.error(f"⚠️ Waduh Chief, ada gangguan: {e}")
