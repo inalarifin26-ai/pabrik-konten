@@ -1,41 +1,65 @@
 import streamlit as st
 import google.generativeai as genai
+from google.api_core import client_options
 
-# --- KONFIGURASI KEDAULATAN ---
-st.set_page_config(page_title="SILA Sovereign OS", page_icon="🛡️")
-
-# Inisialisasi API dengan Jalur Stabil (Poin 3 SILA)
-genai.configure(
-    api_key="AIzaSyCW86D0dmfGwliqF0oPHhGp6COXKy8Q3wI",
-    transport='rest'
+# --- 1. KONFIGURASI HALAMAN ---
+st.set_page_config(
+    page_title="SILA Sovereign OS",
+    page_icon="🛡️",
+    layout="centered"
 )
 
-# Gunakan model_name dengan prefix lengkap untuk menghindari ambiguitas
-model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
+# --- 2. KONFIGURASI API (PROTOKOL KEDAULATAN) ---
+# Pastikan masukkan API Key BARU Anda di bawah ini
+API_KEY = "MASUKKAN_API_KEY_BARU_DI_SINI"
 
-# --- ANTARMUKA ---
+# Memaksa sistem menggunakan jalur v1 (Menghindari Error 404 Jalur Beta)
+options = client_options.ClientOptions(api_version='v1')
+
+genai.configure(
+    api_key=API_KEY,
+    transport='rest',
+    client_options=options
+)
+
+# Inisialisasi Model Gemini 1.5 Flash secara eksplisit
+model = genai.GenerativeModel('models/gemini-1.5-flash')
+
+# --- 3. ANTARMUKA PENGGUNA (UI) ---
 st.title("🛡️ SILA: SOVEREIGN OS")
-st.info("🛰️ **STATUS SYSTEM:** DNA ANCHOR ACTIVE")
+st.markdown("---")
+st.info("🛰️ **STATUS SYSTEM:** PANGKALAN BARU AKTIF")
 
+# Inisialisasi Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Menampilkan Riwayat Chat
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# --- LOGIKA EKSEKUSI ---
-if prompt := st.chat_input("Instruksi Anda, Chief?"):
+# --- 4. LOGIKA KOMUNIKASI ---
+if prompt := st.chat_input("Ketik perintah Anda di sini, Chief..."):
+    # Tampilkan pesan User
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Respon SILA
     with st.chat_message("assistant"):
         try:
-            # Memanggil pusat saraf SILA
+            # Mengirim permintaan ke pusat saraf
             response = model.generate_content(prompt)
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            
+            if response.text:
+                full_response = response.text
+                st.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            else:
+                st.warning("⚠️ Sinyal diterima tapi tidak ada balasan teks.")
+                
         except Exception as e:
-            # Jika masih terhambat, kita akan tahu persis di mana titiknya
-            st.error(f"⚠️ SILA Terhambat: {e}")
+            # Menangkap error tanpa merusak tampilan (Anti-Tembok Merah)
+            st.error(f"⚠️ Gangguan Jaringan: {e}")
+            st.code("Saran: Pastikan API Key benar dan lakukan Reboot di Dashboard Streamlit.")
