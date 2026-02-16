@@ -6,7 +6,7 @@ st.set_page_config(page_title="SILA Sovereign OS", page_icon="🛡️")
 
 # Masukkan API KEY BARU Chief di sini
 #
-genai.configure(api_key="ISI_API_KEY_BARU_CHIEF")
+genai.configure(api_key="AIzaSyDN6n3p9xSj2PCj6-ZSCr9cCDIt5h7sAjA")
 
 # Gunakan model tanpa tambahan parameter rumit
 model = genai.GenerativeModel('gemini-1.5-flash')
