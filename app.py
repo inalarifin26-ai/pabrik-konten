@@ -1,38 +1,32 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- CONFIG ---
 st.set_page_config(page_title="SILA Sovereign OS", page_icon="🛡️")
 
-# Masukkan API KEY BARU Chief di sini
-#
-genai.configure(api_key="AIzaSyDN6n3p9xSj2PCj6-ZSCr9cCDIt5h7sAjA")
+# Masukkan API Key BARU Chief di sini
+API_KEY = "PASTE_API_KEY_BARU_DI_SINI"
 
-# Gunakan model tanpa tambahan parameter rumit
+genai.configure(api_key=API_KEY)
+
+st.title("🛡️ SILA: SOVEREIGN OS")
+
+# FUNGSI DARURAT: Cek model apa yang tersedia di API Key ini
+try:
+    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+    st.success(f"✅ Sistem Berhasil Join! Model tersedia: {available_models}")
+except Exception as e:
+    st.error(f"⚠️ Gagal Cek Model: {e}")
+
+# Inisialisasi Model secara manual dari daftar di atas
+# Jika 'gemini-1.5-flash' ada di daftar, sistem pasti jalan
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- UI ---
-st.title("🛡️ SILA: SOVEREIGN OS")
-st.info("🛰️ **STATUS SYSTEM:** DNA ANCHOR ACTIVE")
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# --- CHAT ---
-if prompt := st.chat_input("Apa perintah Anda, Chief?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+if prompt := st.chat_input("Perintah Anda, Chief?"):
     with st.chat_message("user"):
         st.markdown(prompt)
-
     with st.chat_message("assistant"):
         try:
-            # Panggilan langsung ke saraf pusat
             response = model.generate_content(prompt)
             st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            st.error(f"⚠️ Terjadi kendala: {e}")
+            st.error(f"⚠️ Masalah Teknis: {e}")
