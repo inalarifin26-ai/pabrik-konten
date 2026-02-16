@@ -1,17 +1,18 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- DNA ANCHOR: KUNCI LANGSUNG ---
-# Pastikan tidak ada spasi tambahan di dalam tanda kutip ini
+# --- DNA ANCHOR: BYPASS MODE ---
+# Kunci ditanam langsung untuk menghindari kemacetan menu Secrets
 genai.configure(api_key="AIzaSyCW86D0dmfGwliqF0oPHhGp6COXKy8Q3wI")
 
-# --- INISIALISASI MESIN FLASH ---
-model = genai.GenerativeModel('gemini-1.5-flash')
+# --- INISIALISASI MESIN FLASH LATEST ---
+# Menggunakan 'latest' untuk menembus error 404 versi v1beta
+model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
 st.title("🛡️ SILA: SOVEREIGN OS")
-st.info("Status: SISTEM AKTIF - MENUNGGU PERINTAH CHIEF")
+st.info("STATUS: DNA ANCHOR ACTIVE")
 
-# Kolom Input
+# Input Perintah
 prompt = st.chat_input("Apa instruksi Anda, Chief?")
 
 if prompt:
@@ -19,8 +20,8 @@ if prompt:
         st.write(prompt)
     
     try:
-        # Proses Analisis
-        response = model.generate_content(prompt)
+        # Proses Analisis sebagai SILA
+        response = model.generate_content(f"Bertindaklah sebagai SILA Sovereign OS. Berikan analisis tajam untuk perintah ini: {prompt}")
         with st.chat_message("assistant"):
             st.write(response.text)
     except Exception as e:
