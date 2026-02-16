@@ -1,4 +1,3 @@
 streamlit
-google-generativeai
 firebase-admin
 google-generativeai>=0.22.0
