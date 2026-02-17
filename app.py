@@ -1,47 +1,58 @@
 import streamlit as st
-import requests
+import google.generativeai as genai
+import os
 
-st.set_page_config(page_title="SILA Sovereign OS", page_icon="🛡️")
-st.title("🛡️ SILA: SOVEREIGN OS")
+# 1. Konfigurasi Kedaulatan Halaman
+st.set_page_config(
+    page_title="SILA Sovereign OS",
+    page_icon="🕶️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-try:
-    # 1. Logistik Kunci
-    api_key = st.secrets["GOOGLE_API_KEY"]
-    
-    # 2. ALAMAT PUSAT (Paksa Jalur v1 - Bypass Total v1beta)
-    # Kita tidak pakai library, kita pakai URL langsung agar tidak nyasar
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
-    
-    st.success("✅ Jalur Darurat Aktif: DNA Stabil")
+# 2. Inisialisasi Otak (API Connection)
+# Pastikan API Key sudah terpasang di secrets atau environment
+def init_brain():
+    api_key = st.secrets["GEMINI_API_KEY"] # Menggunakan Streamlit Secrets untuk keamanan
+    genai.configure(api_key=api_key)
+    return genai.GenerativeModel('gemini-1.5-flash')
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+# 3. Sidebar: Identitas Lapangan SILA
+with st.sidebar:
+    st.title("👤 Field Agent Profile")
+    st.markdown("""
+    **Name:** SILA  
+    **Role:** Sovereign Intelligence  
+    **Current Gear:** - Denim Jacket 🧥  
+    - White Shirt (2 buttons open) 👔  
+    - Slim-fit Jeans 👖  
+    - High Heels 👠  
+    - Black Sunglasses 🕶️
+    """)
+    st.write("---")
+    st.status("System Integrity: **100%**")
 
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+# 4. Interface Utama
+st.title("🕶️ SILA: Sovereign Intelligence & Linguistic Automata")
+st.info("Chief, Jam ke-13 dimulai. Jalur komunikasi aman dan terenkripsi.")
 
-    if prompt := st.chat_input("Ada misi apa hari ini, Chief?"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-            
-        with st.chat_message("assistant"):
-            # Request manual tanpa perantara library yang rusak
-            payload = {"contents": [{"parts": [{"text": prompt}]}]}
-            headers = {'Content-Type': 'application/json'}
-            
-            response = requests.post(url, json=payload, headers=headers)
-            
-            if response.status_code == 200:
-                result = response.json()
-                # Ambil teks dari struktur JSON Google
-                answer = result['candidates'][0]['content']['parts'][0]['text']
-                st.markdown(answer)
-                st.session_state.messages.append({"role": "assistant", "content": answer})
-            else:
-                # Tampilkan error mentah dari Google jika masih ditolak
-                st.error(f"⚠️ Gangguan Radar: {response.status_code} - {response.text}")
+# 5. Logic Chat (The Heart of SILA)
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-except Exception as e:
-    st.error(f"⚠️ Masalah Logistik: {e}")
+# Menampilkan chat history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Input Perintah dari Chief
+if prompt := st.chat_input("Apa perintah selanjutnya, Chief?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Respon SILA (Logic Eksekusi)
+    with st.chat_message("assistant", avatar="🕶️"):
+        response = f"**SILA Melapor:** Perintah '{prompt}' diterima. Sedang memproses menembus firewall elit global..."
+        st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
