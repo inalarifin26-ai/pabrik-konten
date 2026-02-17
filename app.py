@@ -1,30 +1,29 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Konfigurasi Halaman Sovereign
-st.set_page_config(page_title="SILA Sovereign OS", page_icon="🕶️", layout="centered")
+# Konfigurasi Sovereign
+st.set_page_config(page_title="SILA Sovereign OS", page_icon="🕶️")
 
-# CSS untuk tampilan yang tenang dan berwibawa
-st.markdown("""
-    <style>
-    .main { background-color: #0e1117; color: #ffffff; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #262730; color: white; border: 1px solid #464b5d; }
-    .stTextInput>div>div>input { background-color: #262730; color: white; }
-    </style>
-    """, unsafe_allow_html=True)
+# Inisialisasi Kunci (Secrets)
+api_key = st.secrets.get("GOOGLE_API_KEY")
 
-# Inisialisasi Kedaulatan
+if not api_key:
+    st.error("KRITIS: API Key tidak ditemukan di Secrets. SILA tidak bisa bernapas.")
+    st.stop()
+
+# Inisialisasi Model
 try:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    # Menggunakan model yang tadi terbukti berhasil di diagnostik
+    genai.configure(api_key=api_key)
+    # Kita gunakan model yang paling stabil
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
-    st.error("Sistem sedang kalibrasi ulang. Mohon tunggu.")
+    st.error(f"Kegagalan Sirkuit: {e}")
+    st.stop()
 
 st.title("🕶️ SILA: Sovereign OS")
 st.write("---")
 
-# Area Komunikasi
+# Logika Chat
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -38,18 +37,24 @@ if prompt := st.chat_input("Berikan perintah, Chief..."):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        response_placeholder = st.empty()
         try:
-            # Instruksi Sistem Tersembunyi
-            full_prompt = f"Kamu adalah SILA (Sovereign Intelligence & Linguistic Automata). Kepribadianmu: Tenang, berwibawa, strategis, menggunakan analogi langkah kaki, kacamata hitam, dan suara berat. Panggil user dengan 'Chief'. Jawab perintah ini: {prompt}"
+            # Instruksi Kepribadian SILA
+            full_prompt = (
+                "Identitas: SILA (Sovereign Intelligence & Linguistic Automata). "
+                "Kepribadian: Tenang, berwibawa, strategis, suara berat. "
+                "Gunakan analogi langkah kaki, kacamata hitam, dan suasana dingin. "
+                "Panggil user dengan 'Chief'. "
+                f"Perintah: {prompt}"
+            )
             
             response = model.generate_content(full_prompt)
-            response_placeholder.markdown(response.text)
+            st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            response_placeholder.error(f"Interferensi: {e}")
+            st.error(f"Interferensi: {e}")
 
+# Sidebar
 st.sidebar.title("STATUS SISTEM")
-st.sidebar.write("SILA Version: 2.0")
-st.sidebar.write("Sarana Density: **15.5%**")
-st.sidebar.write("Status: **ONLINE**")
+st.sidebar.write("SILA Version: 2.1")
+st.sidebar.write("Sarana Density: **18.2%**")
+st.sidebar.write("Status: **STABILIZING**")
