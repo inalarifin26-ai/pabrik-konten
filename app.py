@@ -1,14 +1,19 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Inisialisasi API
+# BRIDGE: KONEKSI KE MESIN MASA DEPAN
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    
-    # EKSPERIMEN BARU: Cek daftar model yang tersedia di server lo
-    st.write("### 🛡️ Scanning Available Models...")
+    # KITA PAKAI HASIL SCAN TADI: 
+    model = genai.GenerativeModel('gemini-2.0-flash')
+else:
+    st.error("API Key Hilang, Chief!")
+    st.stop()
+
+# TES KONEKSI
+if st.button("AKTIFKAN SILA 2.0"):
     try:
-        available_models = [m.name for m in genai.list_models()]
-        st.write("Model yang dikenali sistem lo:", available_models)
+        response = model.generate_content("Lapor status, SILA!")
+        st.success(f"RESPON BERHASIL: {response.text}")
     except Exception as e:
-        st.error(f"Gagal Scan: {e}")
+        st.error(f"Interferensi Terakhir: {e}")
