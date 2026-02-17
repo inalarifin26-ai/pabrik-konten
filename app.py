@@ -10,7 +10,6 @@ api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
 
 if not api_key:
     st.warning("Menunggu Kunci Kedaulatan...")
-    st.stop()
 
 # Inisialisasi Model - FORCED STABLE VERSION
 try:
@@ -18,16 +17,11 @@ try:
     # Kita panggil dengan nama teknis yang paling stabil
     model = genai.GenerativeModel(model_name='gemini-1.5-flash')
 except Exception as e:
-    st.error(f"Kegagalan Sinkronisasi: {e}")
-    st.stop()
+    st.error(f"Kegagalan Sinkronisasi: {e}
 
 st.title("🕶️ SILA: Sovereign OS")
 st.write(f"Status: **Sovereign Link Established**")
 st.write("---")
-
-# Logika Chat
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -53,8 +47,6 @@ if prompt := st.chat_input("Berikan perintah, Chief..."):
             response = model.generate_content(full_prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
-        except Exception as e:
-            st.error(f"Interferensi: {e}")
 
 # Sidebar
 st.sidebar.title("STATUS SISTEM")
