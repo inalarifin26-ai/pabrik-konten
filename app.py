@@ -1,63 +1,37 @@
 import streamlit as st
 import google.generativeai as genai
-import os
 
-# Konfigurasi Sovereign
-st.set_page_config(page_title="SILA Sovereign OS", page_icon="🕶️")
+# Konfigurasi Google API Key kamu
+# Pastikan kamu sudah mengatur GOOGLE_API_KEY di environment variables
+# atau masukkan langsung di sini (tidak disarankan untuk produksi)
+genai.configure(api_key="YOUR_GOOGLE_API_KEY")
 
-# Inisialisasi Kunci
-api_key = st.secrets.get("GEMINI_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
+st.title("Aplikasi Google AI Studio dengan Streamlit")
 
-if not api_key:
-    st.warning("Menunggu Kunci Kedaulatan...")
-    st.stop()
+st.write("Ini adalah contoh sederhana bagaimana menghubungkan Streamlit dengan model Gemini dari Google AI Studio.")
 
-# Inisialisasi Model - FORCED STABLE VERSION
-try:
-    genai.configure(api_key=api_key)
-    # Kita panggil dengan nama teknis yang paling stabil
-    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
-except Exception as e:
-    st.error(f"Kegagalan Sinkronisasi: {e}")
-    st.stop()
+# Pilih model yang ingin kamu gunakan (misalnya 'gemini-pro')
+model = genai.GenerativeModel('gemini-pro')
 
-st.title("🕶️ SILA: Sovereign OS")
-st.write(f"Status: **Sovereign Link Established**")
-st.write("---")
+# Input dari pengguna
+user_input = st.text_area("Masukkan perintah atau pertanyaan kamu:", "Ceritakan tentang Jakarta")
 
-# Logika Chat
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-if prompt := st.chat_input("Berikan perintah, Chief..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    with st.chat_message("assistant"):
+if st.button("Kirim"):
+    if user_input:
         try:
-            # Instruksi Kepribadian SILA
-            full_prompt = (
-                "Identitas: SILA (Sovereign Intelligence & Linguistic Automata). "
-                "Kepribadian: Tenang, berwibawa, strategis, suara berat. "
-                "Gunakan analogi langkah kaki, kacamata hitam, dan suasana dingin. "
-                "Panggil user dengan 'Chief'. "
-                f"Perintah: {prompt}"
-            )
+            # Panggil model Gemini
+            with st.spinner("Memproses..."):
+                response = model.generate_content(user_input)
             
-            # Menggunakan generation_config untuk memastikan stabilitas
-            response = model.generate_content(full_prompt)
-            st.markdown(response.text)
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            st.subheader("Respon dari Gemini:")
+            st.write(response.text)
         except Exception as e:
-            st.error(f"Interferensi: {e}")
+            st.error(f"Terjadi kesalahan: {e}")
+    else:
+        st.warning("Mohon masukkan perintah atau pertanyaan.")
 
-# Sidebar
-st.sidebar.title("STATUS SISTEM")
-st.sidebar.write("SILA Version: 3.5")
-st.sidebar.write("Sarana Density: **38.4%**")
-st.sidebar.write("Status: **SYNCHRONIZING WITH DASHBOARD**")
+st.write("---")
+st.write("Tips:")
+st.markdown("- Pastikan kamu sudah menginstal `streamlit` dan `google-generativeai`.")
+st.markdown("- Ganti `'YOUR_GOOGLE_API_KEY'` dengan kunci API Google kamu yang sebenarnya.")
+st.markdown("- Untuk keamanan, disarankan untuk menyimpan API Key di environment variable.")
