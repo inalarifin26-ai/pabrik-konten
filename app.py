@@ -11,7 +11,7 @@ else:
     st.stop()
 
 # TES KONEKSI
-if st.button("AKTIFKAN SILA 2.0"):
+if st.button("AKTIFKAN SILA 1.5"):
     try:
         response = model.generate_content("Lapor status, SILA!")
         st.success(f"RESPON BERHASIL: {response.text}")
