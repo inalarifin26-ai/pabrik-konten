@@ -1,3 +1,2 @@
 streamlit
-google
-st. stop() 
+google-generativeai
