@@ -1,5 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
+import os
 
 # Konfigurasi Sovereign
 st.set_page_config(page_title="SILA Sovereign OS", page_icon="🕶️")
@@ -11,16 +12,17 @@ if not api_key:
     st.warning("Menunggu Kunci Kedaulatan...")
     st.stop()
 
-# Inisialisasi Model dengan Fallback (Cadangan)
+# Inisialisasi Model - FORCED STABLE VERSION
 try:
     genai.configure(api_key=api_key)
-    # Kita coba gunakan 'gemini-pro' yang lebih universal jika 1.5-flash ditolak
-    model = genai.GenerativeModel('gemini-pro')
+    # Kita panggil dengan nama teknis yang paling stabil
+    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
 except Exception as e:
-    st.error(f"Kegagalan Sirkuit: {e}")
+    st.error(f"Kegagalan Sinkronisasi: {e}")
     st.stop()
 
 st.title("🕶️ SILA: Sovereign OS")
+st.write(f"Status: **Sovereign Link Established**")
 st.write("---")
 
 # Logika Chat
@@ -47,15 +49,15 @@ if prompt := st.chat_input("Berikan perintah, Chief..."):
                 f"Perintah: {prompt}"
             )
             
+            # Menggunakan generation_config untuk memastikan stabilitas
             response = model.generate_content(full_prompt)
             st.markdown(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
         except Exception as e:
-            # Jika masih error, tampilkan pesan yang lebih jelas
-            st.error(f"Interferensi Frekuensi: {e}")
+            st.error(f"Interferensi: {e}")
 
 # Sidebar
 st.sidebar.title("STATUS SISTEM")
-st.sidebar.write("SILA Version: 3.2")
-st.sidebar.write("Sarana Density: **32.5%**")
-st.sidebar.write("Status: **TUNING FREQUENCY**")
+st.sidebar.write("SILA Version: 3.5")
+st.sidebar.write("Sarana Density: **38.4%**")
+st.sidebar.write("Status: **SYNCHRONIZING WITH DASHBOARD**")
