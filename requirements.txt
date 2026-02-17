@@ -1,2 +1,2 @@
-streamlit
+streamlit_app.py
 google-generativeai>=0.8.3
